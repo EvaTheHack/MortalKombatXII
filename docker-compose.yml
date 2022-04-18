@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  mortalkombatxii.api:
+    image: mortalkombatxii.api
+    build:
+      context: .
+      dockerfile: MortalKombatXII.Api/Dockerfile
+    environment:
+      - DbConfig__ConnectionString=server=mortalkombatxii.db;port=3306;userid=subzero;password=2RutERmt6xXCwsVa;database=mortalkombatxii;
+    ports:
+      - "5000:80"
+
+  mortalkombatxii.db:
+    image: mysql:5.7
+    container_name: mortalkombatxii.db
+    environment:
+      MYSQL_ROOT_PASSWORD: 2RutERmt6xXCwsVa
+      MYSQL_DATABASE: mortalkombatxii
+      MYSQL_USER: subzero
+      MYSQL_PASSWORD: 2RutERmt6xXCwsVa
+    ports:
+      - "6033:3306"
+    volumes:
+      - mortalkombatxii_data3:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    links:
+      - mortalkombatxii.db
+    environment:
+      PMA_HOST: mortalkombatxii.db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8081:80
+
+volumes:
+  mortalkombatxii_data3:
