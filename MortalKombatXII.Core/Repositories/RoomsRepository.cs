@@ -56,9 +56,9 @@ namespace MortalKombatXII.Core.Repositories
             {
                 throw new Exception($"This room currently closed; Winner is {room.Winner}");
             }
-            if (room.Warriors.Count == 3)
+            if (room.Warriors.Count == 2)
             {
-                throw new Exception("Room may has only 3 players. Room is full");
+                throw new Exception("Room may has only 2 players. Room is full");
             }
             
             room.Warriors.Add(new Warrior { PlayerId = player.Id, Name = player.Name });
@@ -70,7 +70,7 @@ namespace MortalKombatXII.Core.Repositories
         public Room? GetPendingRoom()
         {
             return _context.Rooms.Include(x => x.Warriors)
-                                 .FirstOrDefault(x => x.Status == RoomStatus.Pending && x.Warriors.Count == 3);
+                                 .FirstOrDefault(x => x.Status == RoomStatus.Pending && x.Warriors.Count == 2);
         }
 
         public void ChangeStatus(Guid roomId, RoomStatus status)
