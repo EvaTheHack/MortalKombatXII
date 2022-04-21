@@ -1,4 +1,5 @@
 ﻿using MortalKombatXII.ClientConsole.Models;
+using MortalKombatXII.ClientConsole.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,60 +10,38 @@ namespace MortalKombatXII.ClientConsole
 {
     public class PlayerService
     {
-        private readonly HttpClient _client = new HttpClient();
 
-        public async Task<Player> CreatePlayerAsync()
+        public Player CreatePlayer()
         {
-            var response = await _client.GetAsync($"{ApiConfig.Url}/players");
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Server is unreachable");
-            }
-            var json = await response.Content.ReadAsStringAsync();
+            var json = HttpUtil.Get($"{ApiConfig.Url}/players");
+
             return JsonConvert.DeserializeObject<Player>(json);
         }
 
-        public async Task<List<Room>> GetRoomsAsync()
+        public List<Room> GetRooms()
         {
-            var response = await _client.GetAsync($"{ApiConfig.Url}/rooms/open");
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Server is unreachable");
-            }
-            var json = await response.Content.ReadAsStringAsync();
+            var json = HttpUtil.Get($"{ApiConfig.Url}/rooms/open");
+
             return JsonConvert.DeserializeObject<List<Room>>(json);
         }
 
-        public async Task<Room> CreateRoomAsync(Guid playerId)
+        public Room CreateRoom(Guid playerId)
         {
-            var response = await _client.PostAsync($"{ApiConfig.Url}/rooms/create/{playerId}", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Server is unreachable");
-            }
-            var json = await response.Content.ReadAsStringAsync();
+            var json = HttpUtil.Post($"{ApiConfig.Url}/rooms/create/{playerId}");
+
             return JsonConvert.DeserializeObject<Room>(json);
         }
 
-        public async Task<Room> ConnectToRoomAsync(Guid roomId, Guid playerId)
+        public Room ConnectToRoom(Guid roomId, Guid playerId)
         {
-            var response = await _client.PostAsync($"{ApiConfig.Url}/rooms/connect/{roomId}/{playerId}", null);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Server is unreachable");
-            }
-            var json = await response.Content.ReadAsStringAsync();
+            var json = HttpUtil.Post($"{ApiConfig.Url}/rooms/connect/{roomId}/{playerId}");
+
             return JsonConvert.DeserializeObject<Room>(json);
         }
 
-        public async Task<dynamic> GetRoomStatusAsync(Guid roomId)
+        public dynamic GetRoomStatus(Guid roomId)
         {
-            var response = await _client.GetAsync($"{ApiConfig.Url}/rooms/{roomId}/status");
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception("Server is unreachable");
-            }
-            var json = await response.Content.ReadAsStringAsync();
+            var json = HttpUtil.Get($"{ApiConfig.Url}/rooms/{roomId}/status");
 
             return GetRoomByType(json);
         }
