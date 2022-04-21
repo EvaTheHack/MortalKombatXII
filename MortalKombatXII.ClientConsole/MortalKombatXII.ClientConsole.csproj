@@ -76,7 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConsoleMenu.cs" />
-    <Compile Include="HttpUtil.cs" />
+    <Compile Include="Services\HttpUtil.cs" />
     <Compile Include="Models\ApiConfig.cs" />
     <Compile Include="Models\BattleRoomStatus.cs" />
     <Compile Include="Models\FinishedRoomStatus.cs" />
