@@ -1,5 +1,6 @@
 ﻿using MortalKombatXII.ClientConsole.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
@@ -7,98 +8,100 @@ namespace MortalKombatXII.ClientConsole
 {
     public class ConsoleMenu
     {
-        private readonly PlayerService _playerService;
+        private const int DELAY_MILLISECONDS = 1000;
+        private readonly PlayerService _playerService = new PlayerService();
         private readonly Player _player;
-        public ConsoleMenu(PlayerService playerService)
+        public ConsoleMenu()
         {
-            _playerService = playerService;
-            _player = _playerService.CreatePlayerAsync().Result;
+            _player = _playerService.CreatePlayer();
         }
 
-        public void Start()
+        public bool Start()
         {
-            Console.WriteLine($"Hello, your nickname - {_player.Name}");
-            Console.WriteLine("1. Create room");
-            Console.WriteLine("2. Connect to room");
-            GetChoice();
-        }
-
-        public void GetChoice()
-        {
-            var choice = Convert.ToInt32(Console.ReadLine());
-            switch (choice)
+            Console.Clear();
+            Console.WriteLine($"Your name is {_player.Name}");
+            Console.WriteLine("Choose an option:");
+            Console.WriteLine("1) Create room");
+            Console.WriteLine("2) Connect to room");
+            Console.WriteLine("3) Exit");
+            Console.Write("\r\nSelect an option: ");
+            switch (Console.ReadLine())
             {
-                case 1:
+                case "1":
                     CreateRoom();
-                    Start();
-                    break;
-                case 2:
+                    return true;
+                case "2":
                     ConnectToRoom();
-                    Start();
-                    break;
+                    return true;
+                case "3":
+                    return false;
                 default:
-                    break;
+                    Console.WriteLine("Unknown option");
+                    return true;
             }
         }
-
 
         private void CreateRoom()
         {
-            var room = _playerService.CreateRoomAsync(_player.Id).Result;
+            var room = _playerService.CreateRoom(_player.Id);
             Console.WriteLine($"Room name - {room.Name}");
-            while (true)
+            RoomStatus status;
+
+            do
             {
-                Thread.Sleep(1000);
-                var roomStatus = _playerService.GetRoomStatusAsync(room.Id).Result;
+                Thread.Sleep(DELAY_MILLISECONDS);
+                var roomStatus = _playerService.GetRoomStatus(room.Id);
+                status = roomStatus.Status;
+
                 ShowRoomStatus(roomStatus);
-                if(roomStatus.Status == RoomStatus.Finished)
-                {
-                    return;
-                }
             }
+            while (status != RoomStatus.Finished);
         }
 
         private void ConnectToRoom()
         {
-            var count = 1;
-            var rooms = _playerService.GetRoomsAsync().Result;
+            var rooms = _playerService.GetRooms();
             if (!rooms.Any())
             {
                 Console.WriteLine("Create room for game");
-                Start();
                 return;
             }
 
-            foreach (var room in rooms)
-            {
-                Console.WriteLine($"{count}. Name: {room.Name}  Players: {room.Warriors.Count}/3 {room.Winner}");
-                count++;
-            }
+            ShowAllRooms(rooms);
 
-            while (true)
+            var room = ConnectToRoom(rooms);
+            if(room == null)
+            {
+                Console.WriteLine("You cannot connect to this room");
+                return;
+            }
+            RoomStatus status;
+
+            do
+            {
+                Thread.Sleep(DELAY_MILLISECONDS);
+
+                var roomStatus = _playerService.GetRoomStatus(room.Id);
+                status = roomStatus.Status;
+
+                ShowRoomStatus(roomStatus);
+            } while (status != RoomStatus.Finished);
+        }
+
+        private Room ConnectToRoom(List<Room> rooms)
+        {
+            try
             {
                 Console.WriteLine("Please choose the room");
                 var choice = Convert.ToInt32(Console.ReadLine());
                 var room = rooms[choice - 1];
-                if(room.Warriors.Count == 3)
-                {
-                    Console.WriteLine("You cannot connect to this room");
-                    Start();
-                    return;
-                }
-                _playerService.ConnectToRoomAsync(room.Id, _player.Id);
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                    var roomStatus = _playerService.GetRoomStatusAsync(room.Id).Result;
-                    ShowRoomStatus(roomStatus);
-                    if (roomStatus.Status == RoomStatus.Finished)
-                    {
-                        return;
-                    }
-                }
-
-            }            
+                _playerService.ConnectToRoom(room.Id, _player.Id);
+                return room;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ShowRoomStatus(dynamic roomStatus)
@@ -112,12 +115,23 @@ namespace MortalKombatXII.ClientConsole
                     Console.WriteLine("There is a fight");
                     foreach (var w in roomStatus.Warriors)
                     {
-                        Console.WriteLine($"{w.Key} - {w.Value} HP");
+                        Console.Write($"\r{w.Key} - {w.Value} HP");
+                        Console.WriteLine();
                     }
                     break;
                 case RoomStatus.Finished:
                     Console.WriteLine($"Battle finished. Warrior {roomStatus.Winner} is champion");
                     return;
+            }
+        }
+
+        private void ShowAllRooms(List<Room> rooms)
+        {
+            var count = 1;
+
+            foreach (var r in rooms)
+            {
+                Console.WriteLine($"{count++}. Name: {r.Name}  Players: {r.Warriors.Count}/2 {r.Winner}");
             }
         }
     }
