@@ -9,14 +9,11 @@ namespace MortalKombatXII.Api.Mapper
         {
             CreateMap<Room, PendingRoomStatus>()
                 .ForMember(x => x.CountPlayers, opt => opt.MapFrom(x => x.Warriors.Count));
-            ;
 
             CreateMap<Room, BattleRoomStatus>()
                 .ForMember(x => x.Warriors, opt => opt.MapFrom(x => x.Warriors.ToDictionary(x => x.Name, x => x.Health)));
-            ;
 
             CreateMap<Room, FinishedRoomStatus>();
-            ;
         }
     }
 }
